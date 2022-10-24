@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "cln4keet",
+    "rest-api",
+]
