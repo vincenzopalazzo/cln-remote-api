@@ -3,6 +3,10 @@
 mod plugin;
 use crate::plugin::build_plugin;
 
-fn main() {
+extern crate rocket;
+
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
     build_plugin().start();
+    Ok(())
 }

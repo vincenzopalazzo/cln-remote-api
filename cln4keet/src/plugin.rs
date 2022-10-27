@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use clightningrpc_plugin::commands::json_utils;
 use clightningrpc_plugin::commands::RPCCommand;
 use clightningrpc_plugin::plugin::Plugin;
 use clightningrpc_plugin::types::LogLevel;
 use rest_api::run_rocket;
+use rocket::tokio::spawn;
 use serde_json::{from_value, Value};
 
 #[derive(Clone)]
@@ -12,7 +15,9 @@ pub(crate) struct PluginState;
 struct OnShutdown;
 
 impl RPCCommand<PluginState> for OnShutdown {
-    fn call_void<'c>(&self, _plugin: &mut Plugin<PluginState>, _request: &'c Value) {}
+    fn call_void<'c>(&self, _plugin: &mut Plugin<PluginState>, _request: &'c Value) {
+        std::process::exit(0);
+    }
 }
 
 // FIXME: register the on init method and if the port is > -1 run the server.
@@ -35,13 +40,18 @@ pub(crate) fn build_plugin() -> Plugin<PluginState> {
             } else {
                 panic!("this should never happen")
             };
-            let server_port = conf.options[0].to_owned();
-            let server_port: i32 = from_value(server_port).unwrap();
+            let opts: HashMap<String, Value> = from_value(conf.options.clone()).unwrap();
+            let server_port = opts["rest-port"].as_i64().unwrap().clone();
             if server_port >= 0 {
                 plugin.log(LogLevel::Info, "running rest server on port {port}");
-                let path = conf.configuration.lightning_dir.as_str();
-                run_rocket(path);
+                let path = conf.configuration.lightning_dir.to_owned();
+                let unix_file = conf.configuration.rpc_file.to_owned();
+                spawn(async move {
+                    let full_path = format!("{path}/{unix_file}");
+                    run_rocket(full_path.as_str()).await;
+                });
             }
+            // FIXME: disable plugin is the port it is not enabled
             json_utils::init_payload()
         })
         .clone()
