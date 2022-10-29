@@ -11,7 +11,10 @@ use std::sync::Once;
 extern crate rocket;
 
 mod info;
+mod pay_api;
+pub mod utils;
 use info::*;
+use pay_api::*;
 
 static INIT: Once = Once::new();
 pub(crate) static mut CLN: Option<RPCClient> = None;
@@ -19,7 +22,10 @@ pub(crate) static mut CLN: Option<RPCClient> = None;
 pub async fn run_rocket(path: &str) {
     INIT.call_once(|| unsafe { CLN = Some(RPCClient::new(&path)) });
     let _ = rocket::build()
-        .mount("/", openapi_get_routes![node_info])
+        .mount(
+            "/",
+            openapi_get_routes![node_info, get_invoice, pay_invoice, decode_invoice],
+        )
         .mount(
             "/swagger-ui/",
             make_swagger_ui(&SwaggerUIConfig {
