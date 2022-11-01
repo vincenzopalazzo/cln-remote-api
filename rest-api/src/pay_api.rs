@@ -39,3 +39,15 @@ pub fn pay_invoice(invoice: Json<Invoice<'_>>) -> Custom<RawJson<String>> {
 pub fn decode_invoice(invoice: Json<Invoice<'_>>) -> Custom<RawJson<String>> {
     run_cln_request_for_rocket("decodepay", &invoice.0)
 }
+
+#[derive(Deserialize, Serialize, JsonSchema)]
+#[serde(crate = "rocket::serde")]
+pub struct ListInvoice<'a> {
+    label: Option<&'a str>,
+}
+
+#[openapi(tag = "Pay")]
+#[post("/cln/v1/listInvoices", data = "<invoice>")]
+pub fn list_invoices(invoice: Json<ListInvoice<'_>>) -> Custom<RawJson<String>> {
+    run_cln_request_for_rocket("listinvoices", &invoice.0)
+}

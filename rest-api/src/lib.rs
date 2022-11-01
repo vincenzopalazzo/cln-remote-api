@@ -24,7 +24,13 @@ pub async fn run_rocket(path: &str) {
     let _ = rocket::build()
         .mount(
             "/",
-            openapi_get_routes![node_info, get_invoice, pay_invoice, decode_invoice],
+            openapi_get_routes![
+                node_info,
+                get_invoice,
+                pay_invoice,
+                decode_invoice,
+                list_invoices
+            ],
         )
         .mount(
             "/swagger-ui/",
