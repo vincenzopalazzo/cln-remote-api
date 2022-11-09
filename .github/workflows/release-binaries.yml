@@ -1,0 +1,66 @@
+name: release-binaries
+on:
+  release:
+    types: [published]
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          default: true
+
+      - name: Build binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target x86_64-unknown-linux-musl
+          use-cross: true
+
+      - name: Optimize and package binary
+        run: |
+          cd target/x86_64-unknown-linux-musl/release
+          strip cln4keet
+          chmod +x cln4keet
+          tar -c cln4keet | gzip > cln4keet.tar.gz
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: cln4keet-${{ github.event.release.tag-name }}-linux-x86_64.tar.gz
+          path: target/x86_64-unknown-linux-musl/release/cln4keet.tar.gz
+
+  macos-x86_64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          default: true
+
+      - name: Build binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+          use-cross: true
+
+      - name: Optimize and package binary
+        run: |
+          cd target/release
+          strip cln4keet
+          chmod +x cln4keet
+          tar -c cln4keet | gzip > cln4keet.tar.gz
+
+      - uses: actions/upload-artifact@v3
+        with:
+            name: cln4keet-${{ github.event.release.tag-name }}-macos-x86_64.tar.gz
+            path: target/release/cln4keet.tar.gz
